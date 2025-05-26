@@ -62,7 +62,9 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                         ['class' => 'nav-link btn btn-link logout']
                     )
                     . Html::endForm()
-                    . '</li>'
+                    . '</li>',
+                ['label' => 'Cart', 'url' => ['/cart/index'], 'visible' => !Yii::$app->user->isGuest],
+                ['label' => 'Cart Items', 'url' => ['/cart-item/index'], 'visible' => !Yii::$app->user->isGuest]
             ]
         ]);
         NavBar::end();

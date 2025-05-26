@@ -15,7 +15,7 @@ use Yii;
  * @property string|null $AddedAt
  *
  * @property Cart $cart
- * @property Products $product
+ * @property Product $product
  */
 class CartItem extends \yii\db\ActiveRecord
 {
@@ -41,7 +41,7 @@ class CartItem extends \yii\db\ActiveRecord
             [['Price'], 'number'],
             [['AddedAt'], 'safe'],
             [['CartID'], 'exist', 'skipOnError' => true, 'targetClass' => Cart::class, 'targetAttribute' => ['CartID' => 'CartID']],
-            [['ProductID'], 'exist', 'skipOnError' => true, 'targetClass' => Products::class, 'targetAttribute' => ['ProductID' => 'ProductID']],
+            [['ProductID'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['ProductID' => 'ProductID']],
         ];
     }
 
@@ -77,7 +77,7 @@ class CartItem extends \yii\db\ActiveRecord
      */
     public function getProduct()
     {
-        return $this->hasOne(Products::class, ['ProductID' => 'ProductID']);
+        return $this->hasOne(Product::class, ['ProductID' => 'ProductID']);
     }
 
 }
