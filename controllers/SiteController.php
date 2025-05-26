@@ -125,4 +125,37 @@ class SiteController extends Controller
     {
         return $this->render('about');
     }
+
+    public function actionSignup()
+    {
+        $model = new \app\models\SignupForm();
+
+        if ($model->load(Yii::$app->request->post()) && $model->signup()) {
+            Yii::$app->session->setFlash('success', 'Thank you for registering. You can now login.');
+            return $this->redirect(['login']);
+        }
+
+        return $this->render('signup', [
+            'model' => $model,
+        ]);
+    }
+    public function actionShop()
+    {
+        return $this->render('shop');
+    }
+    public function actionSingleProduct()
+    {
+        // This action can be used to display a single product's details
+        // You can pass the product ID as a parameter and fetch the product from the database
+        // For now, we'll just render a placeholder view
+        return $this->render('single-product');
+    }
+
+    public function actionCheckout()
+    {
+        // This action can be used to handle the checkout process
+        // You can implement your checkout logic here
+        // For now, we'll just render a placeholder view
+        return $this->render('checkout');
+    }
 }
