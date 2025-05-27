@@ -7,6 +7,9 @@ use app\Models\CartSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use Yii;
+use yii\web\Response;
+use yii\filters\AccessControl;
 
 /**
  * CartController implements the CRUD actions for Cart model.
@@ -40,12 +43,26 @@ class CartController extends Controller
     {
         $searchModel = new CartSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
+        $userId = Yii::$app->user->id;
+        $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
+
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'userId' => $userId,
+            'cart' => $cart,
         ]);
     }
+    // public function actionIndex()
+    // {
+    // Assuming user is logged in
+    //     $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
+
+    //     return $this->render('index', [
+    //         'cart' => $cart,
+    //     ]);
+    // }
 
     /**
      * Displays a single Cart model.
@@ -58,6 +75,41 @@ class CartController extends Controller
         return $this->render('view', [
             'model' => $this->findModel($CartID),
         ]);
+    }
+
+
+    public function actionUpdateCart()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $productId = Yii::$app->request->post('productId');
+        $quantity = Yii::$app->request->post('quantity');
+
+        $session = Yii::$app->session;
+        $cart = $session->get('cart', []);
+
+        foreach ($cart as &$item) {
+            if ($item['id'] == $productId) {
+                $item['quantity'] = max(1, (int)$quantity); // Prevent 0 or negative quantity
+                break;
+            }
+        }
+
+        $session->set('cart', $cart);
+        return ['success' => true];
+    }
+
+    public function actionRemoveFromCart()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $productId = Yii::$app->request->post('productId');
+
+        $session = Yii::$app->session;
+        $cart = $session->get('cart', []);
+
+        $cart = array_filter($cart, fn($item) => $item['id'] != $productId);
+
+        $session->set('cart', $cart);
+        return ['success' => true];
     }
 
     /**

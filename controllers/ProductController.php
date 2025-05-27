@@ -9,6 +9,8 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
+
 
 /**
  * ProductController implements the CRUD actions for Product model.
@@ -18,32 +20,32 @@ class ProductController extends Controller
     /**
      * @inheritDoc
      */
-public function behaviors()
-{
-    return [
-        'access' => [
-            'class' => AccessControl::class,
-            'rules' => [
-                [
-                    'allow' => true,
-                    'roles' => ['@'], 
-                    'matchCallback' => function ($rule, $action) {
-                        return Yii::$app->user->identity->username === 'admin';
-                    },
-                ],
-                [
-                    'allow' => false, 
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->identity->username === 'admin';
+                        },
+                    ],
+                    [
+                        'allow' => false,
+                    ],
                 ],
             ],
-        ],
-        'verbs' => [
-            'class' => VerbFilter::class,
-            'actions' => [
-                'delete' => ['POST'],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'delete' => ['POST'],
+                ],
             ],
-        ],
-    ];
-}
+        ];
+    }
 
 
     /**
@@ -80,23 +82,19 @@ public function behaviors()
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
-    public function actionCreate()
+
+    public function actionUploadImage($id)
     {
-        $model = new Product();
+        $model = Product::findOne($id);
 
-        $model->CreatedAt = date('Y-m-d H:i:s');
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'ProductID' => $model->ProductID]);
+        if (Yii::$app->request->isPost) {
+            $model->eventImage = UploadedFile::getInstance($model, 'eventImage');
+            if ($model->upload()) {
+                return $this->redirect(['view', 'id' => $model->ProductID]);
             }
-        } else {
-            $model->loadDefaultValues();
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->render('upload-image', ['model' => $model]);
     }
 
     /**
@@ -106,17 +104,53 @@ public function behaviors()
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
+    public function actionCreate()
+    {
+        $model = new Product();
+        $model->CreatedAt = date('Y-m-d H:i:s');
+
+        if ($this->request->isPost) {
+            $model->load($this->request->post());
+            $model->eventImage = UploadedFile::getInstance($model, 'eventImage');
+
+            if ($model->validate()) {
+                // Handle file upload if image was uploaded
+                if ($model->eventImage) {
+                    $model->upload();
+                }
+
+                if ($model->save(false)) { // false to skip validation as we already validated
+                    return $this->redirect(['view', 'ProductID' => $model->ProductID]);
+                }
+            }
+        } else {
+            $model->loadDefaultValues();
+        }
+
+        return $this->render('create', ['model' => $model]);
+    }
+
     public function actionUpdate($ProductID)
     {
         $model = $this->findModel($ProductID);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'ProductID' => $model->ProductID]);
+        if ($this->request->isPost) {
+            $model->load($this->request->post());
+            $model->eventImage = UploadedFile::getInstance($model, 'eventImage');
+
+            if ($model->validate()) {
+                // Handle file upload if image was uploaded
+                if ($model->eventImage) {
+                    $model->upload();
+                }
+
+                if ($model->save(false)) { // false to skip validation as we already validated
+                    return $this->redirect(['view', 'ProductID' => $model->ProductID]);
+                }
+            }
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', ['model' => $model]);
     }
 
     /**

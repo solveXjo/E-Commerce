@@ -6,6 +6,9 @@ use yii\widgets\DetailView;
 /** @var yii\web\View $this */
 /** @var app\models\Product $model */
 
+use yii\widgets\ActiveForm;
+
+
 $this->title = $model->Name;
 $this->params['breadcrumbs'][] = ['label' => 'Products', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;

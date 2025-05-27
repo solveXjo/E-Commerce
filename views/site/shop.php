@@ -1,5 +1,97 @@
-<body>
+<?php
 
+$products = (new \yii\db\Query())
+    ->select(['ProductID', 'Name', 'Price', 'Description', 'Category', 'StockQuantity', 'ImageURL'])
+    ->from('Products')
+    ->all();
+?>
+
+
+<?php
+
+use yii\helpers\Html;
+use yii\helpers\Url;
+?>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    function addToCart(productId, productName) {
+        // Show loading state
+        const button = $(`button[data-product-id="${productId}"]`);
+        const originalText = button.html();
+        button.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+        button.prop('disabled', true);
+
+        $.ajax({
+            url: '/site/add-to-cart',
+            type: 'POST',
+            data: {
+                productId: productId,
+                quantity: 1, // Default quantity
+                _csrf: '<?= Yii::$app->request->getCsrfToken() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    showNotification(`${productName} added to cart successfully!`, 'success');
+
+                    // Update cart count if you have a cart counter in your header
+                    updateCartCount();
+
+                    // Reset button
+                    button.html('<i class="fas fa-shopping-cart"></i> Add to Cart');
+                    button.prop('disabled', false);
+                } else {
+                    showNotification(response.message || 'Failed to add item to cart.', 'error');
+                    button.html(originalText);
+                    button.prop('disabled', false);
+                }
+            },
+            error: function() {
+                showNotification('Something went wrong. Please try again.', 'error');
+                button.html(originalText);
+                button.prop('disabled', false);
+            }
+        });
+    }
+
+    function updateCartCount() {
+        $.ajax({
+            url: '/site/cart-count',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    $('.cart-count').text(response.count);
+                }
+            }
+        });
+    }
+
+    function showNotification(message, type) {
+        // Remove any existing notifications
+        $('.notification').remove();
+
+        // Create notification element
+        const notificationClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const notification = `
+            <div class="notification alert ${notificationClass} alert-dismissible" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        `;
+
+        $('body').append(notification);
+
+        // Auto-hide after 3 seconds
+        setTimeout(function() {
+            $('.notification').fadeOut();
+        }, 3000);
+    }
+</script>
+
+
+<body>
     <!--PreLoader-->
     <div class="loader">
         <div class="loader-inner">
@@ -8,7 +100,9 @@
     </div>
     <!--PreLoader Ends-->
 
-
+    <div class="cart-info" style="display: none;">
+        <span class="cart-count">0</span> items in cart
+    </div>
 
     <!-- breadcrumb-section -->
     <div class="breadcrumb-section breadcrumb-bg">
@@ -34,7 +128,7 @@
                     <div class="product-filters">
                         <ul>
                             <li class="active" data-filter="*">All</li>
-                            <li data-filter=".strawberry">Strawberry</li>
+                            <li data-filter=".fruits">Strawberry</li>
                             <li data-filter=".berry">Berry</li>
                             <li data-filter=".lemon">Lemon</li>
                         </ul>
@@ -43,106 +137,33 @@
             </div>
 
             <div class="row product-lists">
-                <div class="col-lg-4 col-md-6 text-center strawberry">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-1.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Strawberry</h3>
-                        <p class="product-price"><span>Per Kg</span> 85$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 text-center berry">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-2.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Berry</h3>
-                        <p class="product-price"><span>Per Kg</span> 70$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 text-center lemon">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-3.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Lemon</h3>
-                        <p class="product-price"><span>Per Kg</span> 35$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 text-center">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-4.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Avocado</h3>
-                        <p class="product-price"><span>Per Kg</span> 50$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 text-center">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-5.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Green Apple</h3>
-                        <p class="product-price"><span>Per Kg</span> 45$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 text-center strawberry">
-                    <div class="single-product-item">
-                        <div class="product-image">
-                            <a href="/site/single-product"><img src=<?= Yii::getAlias('@web/assets/img/products/product-img-6.jpg') ?> alt=""></a>
-                        </div>
-                        <h3>Strawberry</h3>
-                        <p class="product-price"><span>Per Kg</span> 80$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
-                    </div>
-                </div>
-            </div>
 
-            <div class="row">
-                <div class="col-lg-12 text-center">
-                    <div class="pagination-wrap">
-                        <ul>
-                            <li><a href="#">Prev</a></li>
-                            <li><a href="#">1</a></li>
-                            <li><a class="active" href="#">2</a></li>
-                            <li><a href="#">3</a></li>
-                            <li><a href="#">Next</a></li>
-                        </ul>
+                <?php foreach ($products as $product) : ?>
+                    <div class="col-lg-4 col-md-6 text-center <?= strtolower($product['Category']) ?>">
+                        <div class="single-product-item">
+                            <a href="/site/single-product?name=<?= urlencode($product['Name']) ?>">
+                                <div class="product-image">
+                                    <img src="<?php echo Yii::$app->request->baseUrl . '/' . $product['ImageURL']; ?>" alt="<?= Html::encode($product['Name']) ?>" />
+                                </div>
+                            </a>
+                            <h3><?php echo Html::encode($product['Name']); ?></h3>
+                            <p class="product-price"><span>Per Kg</span> $<?php echo $product['Price']; ?></p>
+
+                            <!-- Modified Add to Cart button -->
+                            <button
+                                type="button"
+                                class="cart-btn btn"
+                                data-product-id="<?= $product['ProductID'] ?>"
+                                onclick="addToCart(<?= $product['ProductID'] ?>, '<?= Html::encode($product['Name']) ?>')">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                        </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
-    </div>
-    <!-- end products -->
+        <!-- end products -->
 
 
-
-    <!-- jquery -->
-    <script src="assets/js/jquery-1.11.3.min.js"></script>
-    <!-- bootstrap -->
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <!-- count down -->
-    <script src="assets/js/jquery.countdown.js"></script>
-    <!-- isotope -->
-    <script src="assets/js/jquery.isotope-3.0.6.min.js"></script>
-    <!-- waypoints -->
-    <script src="assets/js/waypoints.js"></script>
-    <!-- owl carousel -->
-    <script src="assets/js/owl.carousel.min.js"></script>
-    <!-- magnific popup -->
-    <script src="assets/js/jquery.magnific-popup.min.js"></script>
-    <!-- mean menu -->
-    <script src="assets/js/jquery.meanmenu.min.js"></script>
-    <!-- sticker js -->
-    <script src="assets/js/sticker.js"></script>
-    <!-- main js -->
-    <script src="assets/js/main.js"></script>
 
 </body>

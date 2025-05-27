@@ -66,10 +66,7 @@ class Cart extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCartItems()
-    {
-        return $this->hasMany(CartItem::class, ['CartID' => 'CartID']);
-    }
+
 
     /**
      * Gets query for [[User]].
@@ -114,7 +111,10 @@ class Cart extends \yii\db\ActiveRecord
     {
         $this->Status = self::STATUS_OPEN;
     }
-
+    public function getCartItems()
+    {
+        return $this->hasMany(CartItem::class, ['CartID' => 'CartID']);
+    }
     /**
      * @return bool
      */
@@ -126,5 +126,152 @@ class Cart extends \yii\db\ActiveRecord
     public function setStatusToCheckedout()
     {
         $this->Status = self::STATUS_CHECKED_OUT;
+    }
+
+    /**
+     * Calculate the subtotal of all items in the cart
+     *
+     * @return float
+     */
+    public function getSubtotal()
+    {
+        $subtotal = 0;
+
+        foreach ($this->cartItems as $item) {
+            $subtotal += ($item->Price * $item->Quantity);
+        }
+
+        return $subtotal;
+    }
+
+    /**
+     * Alternative method using database aggregation (more efficient for large carts)
+     *
+     * @return float
+     */
+    public function getSubtotalFromDb()
+    {
+        $result = CartItem::find()
+            ->where(['CartID' => $this->CartID])
+            ->select('SUM(Price * Quantity) as subtotal')
+            ->scalar();
+
+        return $result ? (float)$result : 0.00;
+    }
+
+    /**
+     * Get total number of items in cart
+     *
+     * @return int
+     */
+    public function getTotalItems()
+    {
+        $total = 0;
+
+        foreach ($this->cartItems as $item) {
+            $total += $item->Quantity;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Alternative method using database aggregation
+     *
+     * @return int
+     */
+    public function getTotalItemsFromDb()
+    {
+        $result = CartItem::find()
+            ->where(['CartID' => $this->CartID])
+            ->select('SUM(Quantity) as total')
+            ->scalar();
+
+        return $result ? (int)$result : 0;
+    }
+
+    /**
+     * Get total with tax
+     *
+     * @param float $taxRate Tax rate (e.g., 0.1 for 10%)
+     * @return float
+     */
+    public function getTotalWithTax($taxRate = 0.1)
+    {
+        $subtotal = $this->getSubtotal();
+        return $subtotal + ($subtotal * $taxRate);
+    }
+
+    /**
+     * Get tax amount
+     *
+     * @param float $taxRate Tax rate (e.g., 0.1 for 10%)
+     * @return float
+     */
+    public function getTaxAmount($taxRate = 0.1)
+    {
+        return $this->getSubtotal() * $taxRate;
+    }
+
+    /**
+     * Check if cart is empty
+     *
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return count($this->cartItems) === 0;
+    }
+
+    /**
+     * Clear all items from cart
+     *
+     * @return bool
+     */
+    public function clearCart()
+    {
+        try {
+            CartItem::deleteAll(['CartID' => $this->CartID]);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get cart summary data
+     *
+     * @param float $taxRate
+     * @return array
+     */
+    public function getSummary($taxRate = 0.1)
+    {
+        $subtotal = $this->getSubtotal();
+        $tax = $subtotal * $taxRate;
+        $total = $subtotal + $tax;
+
+        return [
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'taxRate' => $taxRate,
+            'total' => $total,
+            'itemCount' => $this->getTotalItems(),
+            'isEmpty' => $this->isEmpty()
+        ];
+    }
+
+    /**
+     * Before save event
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($insert) {
+                $this->CreatedAt = date('Y-m-d H:i:s');
+            }
+            $this->UpdatedAt = date('Y-m-d H:i:s');
+            return true;
+        }
+        return false;
     }
 }

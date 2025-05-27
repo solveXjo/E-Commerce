@@ -9,6 +9,11 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\Product;
+use app\models\Cart;
+use app\models\CartItem;
+use app\models\CartSearch;
+
 
 class SiteController extends Controller
 {
@@ -157,5 +162,191 @@ class SiteController extends Controller
         // You can implement your checkout logic here
         // For now, we'll just render a placeholder view
         return $this->render('checkout');
+    }
+
+    public function actionAddToCart()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (Yii::$app->request->isPost) {
+            $productId = Yii::$app->request->post('productId');
+            $quantity = Yii::$app->request->post('quantity', 1);
+
+            try {
+                // Get or create cart for current user/session
+                $cart = $this->getOrCreateCart();
+
+                // Check if product exists
+                $product = Product::findOne($productId); // Adjust model name as needed
+                if (!$product) {
+                    return ['success' => false, 'message' => 'Product not found.'];
+                }
+
+                // Check if item already exists in cart
+                $cartItem = CartItem::find()
+                    ->where(['CartID' => $cart->CartID, 'ProductID' => $productId])
+                    ->one();
+
+                if ($cartItem) {
+                    // Update existing item quantity
+                    $cartItem->Quantity += $quantity;
+                    $cartItem->save();
+                } else {
+                    // Create new cart item
+                    $cartItem = new CartItem();
+                    $cartItem->CartID = $cart->CartID;
+                    $cartItem->ProductID = $productId;
+                    $cartItem->Quantity = $quantity;
+                    $cartItem->Price = $product->Price; // Assuming you have a Price field
+                    $cartItem->save();
+                }
+
+                return [
+                    'success' => true,
+                    'message' => 'Item added to cart successfully!',
+                    'cartCount' => $this->getCartItemCount($cart->CartID)
+                ];
+            } catch (\Exception $e) {
+                return ['success' => false, 'message' => 'Failed to add item to cart.'];
+            }
+        }
+
+        return ['success' => false, 'message' => 'Invalid request.'];
+    }
+
+    /**
+     * Update cart item quantity
+     */
+    public function actionUpdateCart()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (Yii::$app->request->isPost) {
+            $productId = Yii::$app->request->post('productId');
+            $quantity = Yii::$app->request->post('quantity');
+
+            try {
+                $cart = $this->getOrCreateCart();
+
+                $cartItem = CartItem::find()
+                    ->where(['CartID' => $cart->CartID, 'ProductID' => $productId])
+                    ->one();
+
+                if ($cartItem) {
+                    if ($quantity > 0) {
+                        $cartItem->Quantity = $quantity;
+                        $cartItem->save();
+                    } else {
+                        $cartItem->delete();
+                    }
+
+                    return [
+                        'success' => true,
+                        'message' => 'Cart updated successfully!',
+                        'cartCount' => $this->getCartItemCount($cart->CartID)
+                    ];
+                }
+
+                return ['success' => false, 'message' => 'Item not found in cart.'];
+            } catch (\Exception $e) {
+                return ['success' => false, 'message' => 'Failed to update cart.'];
+            }
+        }
+
+        return ['success' => false, 'message' => 'Invalid request.'];
+    }
+
+    /**
+     * Remove item from cart
+     */
+    public function actionRemoveFromCart()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (Yii::$app->request->isPost) {
+            $productId = Yii::$app->request->post('productId');
+
+            try {
+                $cart = $this->getOrCreateCart();
+
+                $cartItem = CartItem::find()
+                    ->where(['CartID' => $cart->CartID, 'ProductID' => $productId])
+                    ->one();
+
+                if ($cartItem) {
+                    $cartItem->delete();
+
+                    return [
+                        'success' => true,
+                        'message' => 'Item removed from cart!',
+                        'cartCount' => $this->getCartItemCount($cart->CartID)
+                    ];
+                }
+
+                return ['success' => false, 'message' => 'Item not found in cart.'];
+            } catch (\Exception $e) {
+                return ['success' => false, 'message' => 'Failed to remove item.'];
+            }
+        }
+
+        return ['success' => false, 'message' => 'Invalid request.'];
+    }
+
+    /**
+     * Get cart item count for AJAX updates
+     */
+    public function actionCartCount()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $cart = $this->getOrCreateCart();
+            $count = $this->getCartItemCount($cart->CartID);
+
+            return ['success' => true, 'count' => $count];
+        } catch (\Exception $e) {
+            return ['success' => false, 'count' => 0];
+        }
+    }
+
+    /**
+     * Helper method to get or create cart
+     */
+    private function getOrCreateCart()
+    {
+        $session = Yii::$app->session;
+
+        // For logged-in users, use UserID, otherwise use session
+        if (!Yii::$app->user->isGuest) {
+            $cart = Cart::find()->where(['UserID' => Yii::$app->user->id])->one();
+        } else {
+            // For guest users, store cart ID in session
+            $cartId = $session->get('cart_id');
+            $cart = $cartId ? Cart::findOne($cartId) : null;
+        }
+
+        if (!$cart) {
+            $cart = new Cart();
+            $cart->UserID = !Yii::$app->user->isGuest ? Yii::$app->user->id : null;
+            $cart->CreatedAt = date('Y-m-d H:i:s');
+            $cart->save();
+
+            // Store cart ID in session for guest users
+            if (Yii::$app->user->isGuest) {
+                $session->set('cart_id', $cart->CartID);
+            }
+        }
+
+        return $cart;
+    }
+
+    /**
+     * Helper method to get cart item count
+     */
+    private function getCartItemCount($cartId)
+    {
+        return CartItem::find()
+            ->where(['CartID' => $cartId])
+            ->sum('Quantity') ?: 0;
     }
 }
