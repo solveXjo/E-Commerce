@@ -28,7 +28,7 @@ use yii\helpers\Url;
             type: 'POST',
             data: {
                 productId: productId,
-                quantity: 1, // Default quantity
+                quantity: 1,
                 _csrf: '<?= Yii::$app->request->getCsrfToken() ?>'
             },
             success: function(response) {
@@ -149,13 +149,12 @@ use yii\helpers\Url;
                             <h3><?php echo Html::encode($product['Name']); ?></h3>
                             <p class="product-price"><span>Per Kg</span> $<?php echo $product['Price']; ?></p>
 
-                            <!-- Modified Add to Cart button -->
                             <button
                                 type="button"
-                                class="cart-btn btn"
+                                class="cart-btn btn btn-primary"
                                 data-product-id="<?= $product['ProductID'] ?>"
                                 onclick="addToCart(<?= $product['ProductID'] ?>, '<?= Html::encode($product['Name']) ?>')">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                                <i class="fas fa-shopping-cart "></i> Add to Cart
                             </button>
                         </div>
                     </div>

@@ -43,21 +43,22 @@ class CartController extends Controller
     {
         $searchModel = new CartSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
-        $userId = Yii::$app->user->id;
-        $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
-
+        $userId = Yii::$app->user->id; // Assuming user is logged in
+        $cart = Cart::find()->where([
+            'UserID' => $userId,
+            'Status' => 'open'
+        ])->with('cartItems.product')->one();
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'userId' => $userId,
             'cart' => $cart,
+            'userId' => $userId,
         ]);
     }
     // public function actionIndex()
     // {
-    // Assuming user is logged in
-    //     $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
+    //     
 
     //     return $this->render('index', [
     //         'cart' => $cart,
@@ -73,7 +74,7 @@ class CartController extends Controller
     public function actionView($CartID)
     {
         return $this->render('view', [
-            'model' => $this->findModel($CartID),
+            'cart' => $CartID,
         ]);
     }
 

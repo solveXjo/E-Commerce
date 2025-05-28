@@ -59,6 +59,105 @@ class SiteController extends Controller
         ];
     }
 
+
+
+    public function actionCheckout()
+    {
+        $orderModel = new \app\models\Order();
+        $userId = Yii::$app->user->id;
+
+        if ($orderModel->load(Yii::$app->request->post())) {
+            $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
+
+            if ($cart && !empty($cart->cartItems)) {
+                $orderModel->user_id = $userId;
+                $orderModel->total_amount = array_sum(array_map(function ($item) {
+                    return $item->Quantity * $item->product->Price;
+                }, $cart->cartItems));
+
+                if ($orderModel->save()) {
+                    $cart->Status = 'checked_out';
+                    $cart->save();
+
+                    $newCart = Cart::createNewCart($userId);
+
+                    if (!$newCart) {
+                        Yii::$app->session->setFlash('error', 'Failed to create a new cart.');
+                    }
+
+
+                    return $this->redirect(['site/shop', 'id' => $orderModel->id]);
+                }
+            } else {
+                Yii::$app->session->setFlash('error', 'Your cart is empty.');
+            }
+        }
+
+        return $this->render('checkout', [
+            'orderModel' => $orderModel,
+            'cart' => Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one(),
+            'userId' => $userId,
+            // 'orderModel' => $orderModel,
+        ]);
+    }
+
+    /**
+     * Process the checkout.
+     */
+    public function actionProcessCheckout()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $userId = Yii::$app->user->id;
+
+        // Fetch the user's cart
+        $cart = Cart::find()->where(['UserID' => $userId, 'Status' => 'open'])->with('cartItems.product')->one();
+
+        if (!$cart || empty($cart->cartItems)) {
+            return ['success' => false, 'message' => 'Your cart is empty.'];
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            // Validate stock availability and calculate total
+            $totalAmount = 0;
+            foreach ($cart->cartItems as $item) {
+                $product = $item->product;
+
+                if (!$product || $product->StockQuantity < $item->Quantity) {
+                    throw new \Exception("Product '{$product->Name}' is out of stock or insufficient quantity.");
+                }
+
+                $totalAmount += $item->Quantity * $product->Price;
+
+                // Reduce stock for the product
+                $product->StockQuantity -= $item->Quantity;
+                if (!$product->save()) {
+                    throw new \Exception('Failed to update product stock.');
+                }
+            }
+
+            // Mark cart as checked out
+            $cart->Status = 'checked_out';
+            if (!$cart->save()) {
+                throw new \Exception('Failed to update cart status.');
+            }
+
+            $transaction->commit();
+
+            // Success response
+            return [
+                'success' => true,
+                'message' => 'Checkout successful! Thank you for your order.',
+                'totalAmount' => $totalAmount,
+            ];
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error('Checkout error: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     /**
      * Displays homepage.
      *
@@ -156,13 +255,7 @@ class SiteController extends Controller
         return $this->render('single-product');
     }
 
-    public function actionCheckout()
-    {
-        // This action can be used to handle the checkout process
-        // You can implement your checkout logic here
-        // For now, we'll just render a placeholder view
-        return $this->render('checkout');
-    }
+
 
     public function actionAddToCart()
     {
@@ -173,16 +266,19 @@ class SiteController extends Controller
             $quantity = Yii::$app->request->post('quantity', 1);
 
             try {
-                // Get or create cart for current user/session
+                // Get or create cart for the current user/session
                 $cart = $this->getOrCreateCart();
+                if (!$cart) {
+                    throw new \Exception('Failed to create or retrieve the cart.');
+                }
 
-                // Check if product exists
-                $product = Product::findOne($productId); // Adjust model name as needed
+                // Check if the product exists
+                $product = Product::findOne($productId);
                 if (!$product) {
                     return ['success' => false, 'message' => 'Product not found.'];
                 }
 
-                // Check if item already exists in cart
+                // Check if item already exists in the cart
                 $cartItem = CartItem::find()
                     ->where(['CartID' => $cart->CartID, 'ProductID' => $productId])
                     ->one();
@@ -190,15 +286,17 @@ class SiteController extends Controller
                 if ($cartItem) {
                     // Update existing item quantity
                     $cartItem->Quantity += $quantity;
-                    $cartItem->save();
                 } else {
                     // Create new cart item
                     $cartItem = new CartItem();
                     $cartItem->CartID = $cart->CartID;
                     $cartItem->ProductID = $productId;
                     $cartItem->Quantity = $quantity;
-                    $cartItem->Price = $product->Price; // Assuming you have a Price field
-                    $cartItem->save();
+                    $cartItem->Price = $product->Price;
+                }
+
+                if (!$cartItem->save()) {
+                    throw new \Exception('Failed to save cart item: ' . json_encode($cartItem->errors));
                 }
 
                 return [
@@ -207,7 +305,8 @@ class SiteController extends Controller
                     'cartCount' => $this->getCartItemCount($cart->CartID)
                 ];
             } catch (\Exception $e) {
-                return ['success' => false, 'message' => 'Failed to add item to cart.'];
+                Yii::error('Add to cart error: ' . $e->getMessage(), __METHOD__);
+                return ['success' => false, 'message' => $e->getMessage()];
             }
         }
 
@@ -316,22 +415,28 @@ class SiteController extends Controller
     {
         $session = Yii::$app->session;
 
-        // For logged-in users, use UserID, otherwise use session
         if (!Yii::$app->user->isGuest) {
-            $cart = Cart::find()->where(['UserID' => Yii::$app->user->id])->one();
+            $cart = Cart::find()
+                ->where(['UserID' => Yii::$app->user->id, 'Status' => Cart::STATUS_OPEN])
+                ->one();
         } else {
-            // For guest users, store cart ID in session
             $cartId = $session->get('cart_id');
-            $cart = $cartId ? Cart::findOne($cartId) : null;
+            if ($cartId) {
+                $cart = Cart::findOne($cartId);
+                if ($cart && $cart->Status !== Cart::STATUS_OPEN) {
+                    $cart = null;
+                    $session->remove('cart_id');
+                }
+            } else {
+                $cart = null;
+            }
         }
 
         if (!$cart) {
-            $cart = new Cart();
-            $cart->UserID = !Yii::$app->user->isGuest ? Yii::$app->user->id : null;
-            $cart->CreatedAt = date('Y-m-d H:i:s');
-            $cart->save();
-
-            // Store cart ID in session for guest users
+            $cart = Cart::createNewCart(!Yii::$app->user->isGuest ? Yii::$app->user->id : null);
+            if (!$cart) {
+                throw new \Exception('Unable to create a new cart.');
+            }
             if (Yii::$app->user->isGuest) {
                 $session->set('cart_id', $cart->CartID);
             }
@@ -339,6 +444,7 @@ class SiteController extends Controller
 
         return $cart;
     }
+
 
     /**
      * Helper method to get cart item count

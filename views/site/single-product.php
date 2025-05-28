@@ -1,11 +1,94 @@
 <?php
 
+use yii\helpers\Html;
+use yii\helpers\Url;
+
+
+
 $products = (new \yii\db\Query())
     ->select(['ProductID', 'Name', 'Price', 'Description', 'Category', 'StockQuantity', 'ImageURL'])
     ->from('Products')
     ->where(['Name' => Yii::$app->request->get('name')])
     ->all();
 ?>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    function addToCart(productId, productName) {
+        // Show loading state
+        const button = $(`button[data-product-id="${productId}"]`);
+        const originalText = button.html();
+        button.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+        button.prop('disabled', true);
+
+        $.ajax({
+            url: '/site/add-to-cart',
+            type: 'POST',
+            data: {
+                productId: productId,
+                quantity: 1, // Default quantity
+                _csrf: '<?= Yii::$app->request->getCsrfToken() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    showNotification(`${productName} added to cart successfully!`, 'success');
+
+                    // Update cart count if you have a cart counter in your header
+                    updateCartCount();
+
+                    // Reset button
+                    button.html('<i class="fas fa-shopping-cart"></i> Add to Cart');
+                    button.prop('disabled', false);
+                } else {
+                    showNotification(response.message || 'Failed to add item to cart.', 'error');
+                    button.html(originalText);
+                    button.prop('disabled', false);
+                }
+            },
+            error: function() {
+                showNotification('Something went wrong. Please try again.', 'error');
+                button.html(originalText);
+                button.prop('disabled', false);
+            }
+        });
+    }
+
+    function updateCartCount() {
+        $.ajax({
+            url: '/site/cart-count',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    $('.cart-count').text(response.count);
+                }
+            }
+        });
+    }
+
+    function showNotification(message, type) {
+        // Remove any existing notifications
+        $('.notification').remove();
+
+        // Create notification element
+        const notificationClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const notification = `
+            <div class="notification alert ${notificationClass} alert-dismissible" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        `;
+
+        $('body').append(notification);
+
+        // Auto-hide after 3 seconds
+        setTimeout(function() {
+            $('.notification').fadeOut();
+        }, 3000);
+    }
+</script>
 
 <body>
 
@@ -45,10 +128,16 @@ $products = (new \yii\db\Query())
                             <p class="single-product-pricing"><span>Per Kg</span> <?= $product['Price'] ?>$</p>
                             <p><?= $product['Description'] ?></p>
                             <div class="single-product-form">
-                                <form action="index.html">
+                                <!-- <form action="index.html">
                                     <input type="number" placeholder="0">
-                                </form>
-                                <a href="/cart" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
+                                </form> -->
+                                <button
+                                    type="button"
+                                    class="cart-btn btn btn-primary"
+                                    data-product-id="<?= $product['ProductID'] ?>"
+                                    onclick="addToCart(<?= $product['ProductID'] ?>, '<?= Html::encode($product['Name']) ?>')">
+                                    <i class="fas fa-shopping-cart "></i> Add to Cart
+                                </button>
                                 <p><strong>Categories: </strong><?= $product['Category'] ?></p>
                             </div>
                             <h4>Share:</h4>

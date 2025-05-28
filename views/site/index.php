@@ -146,39 +146,40 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row align-items-center justify-content-center">
                 <div class="col-lg-4 col-md-6 text-center">
                     <div class="single-product-item">
                         <div class="product-image">
-                            <a href="single-product.html"> <img src="<?= Yii::getAlias('@web/assets/img/products/product-img-1.jpg') ?>" alt="">
+                            <a href="/site/single-product?name=Strawberry"> <img src="<?= Yii::getAlias('@web/assets/img/products/product-img-1.jpg') ?>" alt="">
                             </a>
                         </div>
                         <h3>Strawberry</h3>
                         <p class="product-price"><span>Per Kg</span> 85$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 text-center">
                     <div class="single-product-item">
                         <div class="product-image">
-                            <a href="single-product.html"><img src="<?= Yii::getAlias('@web/assets/img/products/product-img-2.jpg') ?>" alt=""></a>
+                            <a href="/site/single-product?name=Berry"><img src="<?= Yii::getAlias('@web/assets/img/products/product-img-2.jpg') ?>" alt=""></a>
                         </div>
                         <h3>Berry</h3>
                         <p class="product-price"><span>Per Kg</span> 70$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 offset-md-3 offset-lg-0 text-center">
                     <div class="single-product-item">
                         <div class="product-image">
-                            <a href="single-product.html"><img src="<?= Yii::getAlias('@web/assets/img/products/product-img-3.jpg') ?>" alt=""></a>
+                            <a href="/site/single-product?name=Lemon"><img src="<?= Yii::getAlias('@web/assets/img/products/product-img-3.jpg') ?>" alt=""></a>
                         </div>
                         <h3>Lemon</h3>
                         <p class="product-price"><span>Per Kg</span> 35$ </p>
-                        <a href="cart.html" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
                     </div>
                 </div>
+                <a href="/site/shop" class="cart-btn col-lg-2 col-md-3 text-center"><i class=" fas fa-shopping-cart"></i>go shopping</a>
+
             </div>
+
+
         </div>
     </div>
     <!-- end product section -->
@@ -300,7 +301,7 @@
                         <h2>We are <span class="orange-text">Fruitkha</span></h2>
                         <p>Etiam vulputate ut augue vel sodales. In sollicitudin neque et massa porttitor vestibulum ac vel nisi. Vestibulum placerat eget dolor sit amet posuere. In ut dolor aliquet, aliquet sapien sed, interdum velit. Nam eu molestie lorem.</p>
                         <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sapiente facilis illo repellat veritatis minus, et labore minima mollitia qui ducimus.</p>
-                        <a href="about.html" class="boxed-btn mt-4">know more</a>
+                        <a href="/site/about" class="boxed-btn mt-4">know more</a>
                     </div>
                 </div>
             </div>

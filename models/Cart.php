@@ -260,6 +260,21 @@ class Cart extends \yii\db\ActiveRecord
         ];
     }
 
+
+    public static function createNewCart($userId)
+    {
+        $newCart = new self();
+        $newCart->UserID = $userId;
+        $newCart->Status = 'open';
+        $newCart->CreatedAt = date('Y-m-d H:i:s');
+
+        if ($newCart->save()) {
+            return $newCart;
+        }
+
+        return null;
+    }
+
     /**
      * Before save event
      */
