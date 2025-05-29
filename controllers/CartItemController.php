@@ -41,12 +41,11 @@ class CartItemController extends Controller
         $searchModel = new CartItemSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
-        return $this->render('index', [
+        return $this->render('/admin/cart-item', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
     }
-
     /**
      * Displays a single CartItem model.
      * @param int $CartItemID Cart Item ID

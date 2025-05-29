@@ -3,39 +3,34 @@
 namespace app\models;
 
 use Yii;
+use yii\db\ActiveRecord;
 use yii\web\UploadedFile;
-use yii\helpers\Url;
-use yii\helpers\FileHelper;
-
 
 /**
  * This is the model class for table "products".
  *
  * @property int $ProductID
  * @property string $Name
- * @property float $Price
  * @property string|null $Description
- * @property string|null $Category
- * @property int|null $StockQuantity
+ * @property float $Price
+ * @property int $StockQuantity
+ * @property int|null $Category
  * @property string|null $ImageURL
- * @property string|null $CreatedAt
- * public $eventImage;
-
-
+ * @property string $CreatedAt
+ * @property string|null $UpdatedAt
+ *
+ * @property UploadedFile $imageFile
  */
-class Product extends \yii\db\ActiveRecord
+class Product extends ActiveRecord
 {
-
-    public $eventImage;
-
-
+    public $imageFile;
 
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'Products';
+        return 'products';
     }
 
     /**
@@ -44,16 +39,14 @@ class Product extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['Description', 'Category', 'ImageURL'], 'default', 'value' => null],
-            [['StockQuantity'], 'default', 'value' => 0],
-            [['Name', 'Price'], 'required'],
-            [['Price'], 'number'],
-            [['Description'], 'string'],
-            [['StockQuantity'], 'integer'],
-            [['CreatedAt'], 'safe'],
-            [['Name', 'ImageURL'], 'string', 'max' => 255],
-            [['Category'], 'string', 'max' => 100],
-            [['eventImage'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg'],
+            [['Name', 'Price', 'StockQuantity'], 'required'],
+            [['Description', 'Category'], 'string'],
+            [['Price'], 'number', 'min' => 0],
+            [['StockQuantity'], 'integer', 'min' => 0],
+            [['CreatedAt', 'UpdatedAt'], 'safe'],
+            [['Name'], 'string', 'max' => 255],
+            [['ImageURL'], 'string', 'max' => 500],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg, gif'],
         ];
     }
 
@@ -64,57 +57,86 @@ class Product extends \yii\db\ActiveRecord
     {
         return [
             'ProductID' => 'Product ID',
-            'Name' => 'Name',
-            'Price' => 'Price',
+            'Name' => 'Product Name',
             'Description' => 'Description',
-            'Category' => 'Category',
+            'Price' => 'Price ($)',
             'StockQuantity' => 'Stock Quantity',
-            'ImageURL' => 'Image Url',
+            'Category' => 'Category',
+            'ImageURL' => 'Image URL',
             'CreatedAt' => 'Created At',
-            'eventImage' => 'Event Image',
+            'UpdatedAt' => 'Updated At',
+            'imageFile' => 'Product Image',
         ];
     }
 
-    public function actionUpload($id)
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
     {
-        $model = $this->findModel($id);
-
-        if (Yii::$app->request->isPost) {
-            $model->eventImage = UploadedFile::getInstance($model, 'eventImage');
-            if ($model->upload()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+        if (parent::beforeSave($insert)) {
+            if ($insert) {
+                $this->CreatedAt = date('Y-m-d H:i:s');
+            } else {
+                $this->UpdatedAt = date('Y-m-d H:i:s');
             }
-        }
-
-        return $this->render('upload', ['model' => $model]);
-    }
-    public function upload()
-    {
-        if ($this->eventImage) {
-            // Create directory if it doesn't exist
-            $uploadPath = $this->getUploadPath();
-            FileHelper::createDirectory($uploadPath);
-
-            // Generate unique filename
-            $filename = uniqid() . '.' . $this->eventImage->extension;
-            $filePath = $uploadPath . $filename;
-
-            if ($this->eventImage->saveAs($filePath)) {
-                // Save relative path to database
-                $this->ImageURL = 'uploads/events/' . $filename;
-                return $this->save(false); // Skip validation as we're just updating the image
-            }
+            return true;
         }
         return false;
     }
 
-    public function getUploadPath()
+    /**
+     * Get formatted price
+     */
+    public function getFormattedPrice()
     {
-        return Yii::getAlias('@webroot/uploads/events/');
+        return '$' . number_format($this->Price, 2);
     }
 
+    /**
+     * Get stock status
+     */
+    public function getStockStatus()
+    {
+        if ($this->StockQuantity > 10) {
+            return 'In Stock';
+        } elseif ($this->StockQuantity > 0) {
+            return 'Low Stock';
+        } else {
+            return 'Out of Stock';
+        }
+    }
+
+    /**
+     * Get stock status class for badges
+     */
+    public function getStockStatusClass()
+    {
+        if ($this->StockQuantity > 10) {
+            return 'success';
+        } elseif ($this->StockQuantity > 0) {
+            return 'warning';
+        } else {
+            return 'danger';
+        }
+    }
+
+    /**
+     * Get image URL with fallback
+     */
     public function getImageUrl()
     {
-        return Url::to('@web/uploads/events/' . basename($this->ImageURL));
+        if ($this->ImageURL) {
+            return Yii::getAlias('@web/') . $this->ImageURL;
+        }
+        return null;
+    }
+
+    /**
+     * Get total inventory value
+     */
+    public function getTotalValue()
+    {
+        return $this->Price * $this->StockQuantity;
     }
 }

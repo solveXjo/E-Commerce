@@ -12,6 +12,7 @@ use Yii;
  * @property string|null $CreatedAt
  * @property string|null $Status
  *
+ * @property string|null $UpdatedAt
  * @property CartItem[] $cartItems
  * @property User $user
  */

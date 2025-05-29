@@ -95,7 +95,11 @@ $products = (new \yii\db\Query())
 
     <!-- breadcrumb-section -->
     <div class="breadcrumb-section breadcrumb-bg">
+
+
         <div class="container">
+            <a onclick="history.back()"><i class="fa fa-arrow-left ms-5" aria-hidden="true"> go back</i>
+            </a>
             <div class="row">
                 <div class="col-lg-8 offset-lg-2 text-center">
                     <div class="breadcrumb-text">

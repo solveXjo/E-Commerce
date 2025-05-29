@@ -294,7 +294,7 @@ use yii\widgets\ActiveForm;
                         <div class="empty-cart-message">
                             <h3>Your cart is empty!</h3>
                             <p>Add some products to your cart before proceeding to checkout.</p>
-                            <a href="<?= Url::to(['site/products']) ?>" class="boxed-btn">
+                            <a href="<?= Url::to(['site/shop']) ?>" class="boxed-btn">
                                 Continue Shopping
                             </a>
                         </div>
@@ -442,65 +442,3 @@ use yii\widgets\ActiveForm;
             $('#hidden-total').val(total.toFixed(2));
         }
     </script>
-
-    <style>
-        .product-quantity {
-            color: #888;
-            font-size: 0.9em;
-        }
-
-        .total-row {
-            border-top: 2px solid #ddd;
-            font-weight: bold;
-        }
-
-        .empty-cart-message {
-            padding: 50px 0;
-        }
-
-        .is-invalid {
-            border-color: #dc3545 !important;
-        }
-
-        .form-control {
-            margin-bottom: 15px;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .checkout-form .form-group {
-            margin-bottom: 0;
-        }
-
-        #credit-card-fields {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-    </style>
-
-    <!-- jquery -->
-    <script src="assets/js/jquery-1.11.3.min.js"></script>
-    <!-- bootstrap -->
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <!-- count down -->
-    <script src="assets/js/jquery.countdown.js"></script>
-    <!-- isotope -->
-    <script src="assets/js/jquery.isotope-3.0.6.min.js"></script>
-    <!-- waypoints -->
-    <script src="assets/js/waypoints.js"></script>
-    <!-- owl carousel -->
-    <script src="assets/js/owl.carousel.min.js"></script>
-    <!-- magnific popup -->
-    <script src="assets/js/jquery.magnific-popup.min.js"></script>
-    <!-- mean menu -->
-    <script src="assets/js/jquery.meanmenu.min.js"></script>
-    <!-- sticker js -->
-    <script src="assets/js/sticker.js"></script>
-    <!-- main js -->
-    <script src="assets/js/main.js"></script>
-
-</body>
-
-</html>

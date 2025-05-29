@@ -13,6 +13,10 @@ use app\models\Product;
 use app\models\Cart;
 use app\models\CartItem;
 use app\models\CartSearch;
+use app\models\Order;
+use Error;
+use yii\data\ActiveDataProvider;
+
 
 
 class SiteController extends Controller
@@ -247,6 +251,11 @@ class SiteController extends Controller
     {
         return $this->render('shop');
     }
+
+    public function actionOrderSuccess()
+    {
+        return $this->render('order-success');
+    }
     public function actionSingleProduct()
     {
         // This action can be used to display a single product's details
@@ -389,6 +398,39 @@ class SiteController extends Controller
         }
 
         return ['success' => false, 'message' => 'Invalid request.'];
+    }
+
+    public function actionMyOrders()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => Order::find()
+                ->where(['user_id' => Yii::$app->user->id])
+                ->orderBy(['created_at' => SORT_DESC]),
+            'pagination' => [
+                'pageSize' => 10,
+            ],
+        ]);
+
+        return $this->render('my-orders', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionViewOrder($id)
+    {
+        $order = Order::findOne(['id' => $id, 'user_id' => Yii::$app->user->id]);
+
+        if (!$order) {
+            throw new Error('Order not found or you do not have permission to view it.');
+        }
+
+        return $this->render('view-order', [
+            'order' => $order,
+        ]);
     }
 
     /**

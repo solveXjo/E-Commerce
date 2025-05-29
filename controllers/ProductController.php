@@ -11,6 +11,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\UploadedFile;
 
+use yii\data\ActiveDataProvider;
 
 /**
  * ProductController implements the CRUD actions for Product model.
@@ -55,12 +56,20 @@ class ProductController extends Controller
      */
     public function actionIndex()
     {
+        $this->layout = 'admin';
         $searchModel = new ProductSearch();
-        $dataProvider = $searchModel->search($this->request->queryParams);
+        $searchModel->load(Yii::$app->request->queryParams);
 
-        return $this->render('index', [
-            'searchModel' => $searchModel,
+        $dataProvider = new ActiveDataProvider([
+            'query' => Product::find()->orderBy(['CreatedAt' => SORT_DESC]),
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+        ]);
+
+        return $this->render('/admin/product', [
             'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
         ]);
     }
 
@@ -136,11 +145,11 @@ class ProductController extends Controller
 
         if ($this->request->isPost) {
             $model->load($this->request->post());
-            $model->eventImage = UploadedFile::getInstance($model, 'eventImage');
+            $model->ImageURL = UploadedFile::getInstance($model, 'eventImage');
 
             if ($model->validate()) {
                 // Handle file upload if image was uploaded
-                if ($model->eventImage) {
+                if ($model->ImageURL) {
                     $model->upload();
                 }
 
@@ -150,7 +159,7 @@ class ProductController extends Controller
             }
         }
 
-        return $this->render('update', ['model' => $model]);
+        return $this->render('/admin/product', ['model' => $model]);
     }
 
     /**

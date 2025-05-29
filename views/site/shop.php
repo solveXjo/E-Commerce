@@ -128,9 +128,9 @@ use yii\helpers\Url;
                     <div class="product-filters">
                         <ul>
                             <li class="active" data-filter="*">All</li>
-                            <li data-filter=".fruits">Strawberry</li>
+                            <li data-filter=".fruits">fruits</li>
                             <li data-filter=".berry">Berry</li>
-                            <li data-filter=".lemon">Lemon</li>
+                            <li data-filter=".citrus">Citrus</li>
                         </ul>
                     </div>
                 </div>

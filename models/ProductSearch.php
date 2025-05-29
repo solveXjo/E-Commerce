@@ -1,10 +1,9 @@
 <?php
 
-namespace app\Models;
+namespace app\models;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Product;
 
 /**
  * ProductSearch represents the model behind the search form of `app\models\Product`.
@@ -17,8 +16,8 @@ class ProductSearch extends Product
     public function rules()
     {
         return [
-            [['ProductID', 'StockQuantity'], 'integer'],
-            [['Name', 'Description', 'Category', 'ImageURL', 'CreatedAt'], 'safe'],
+            [['ProductID', 'Category', 'StockQuantity'], 'integer'],
+            [['Name', 'Description', 'ImageURL', 'CreatedAt', 'UpdatedAt'], 'safe'],
             [['Price'], 'number'],
         ];
     }
@@ -36,11 +35,10 @@ class ProductSearch extends Product
      * Creates data provider instance with search query applied
      *
      * @param array $params
-     * @param string|null $formName Form name to be used into `->load()` method.
      *
      * @return ActiveDataProvider
      */
-    public function search($params, $formName = null)
+    public function search($params)
     {
         $query = Product::find();
 
@@ -48,9 +46,17 @@ class ProductSearch extends Product
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'defaultOrder' => [
+                    'CreatedAt' => SORT_DESC,
+                ]
+            ],
         ]);
 
-        $this->load($params, $formName);
+        $this->load($params);
 
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
@@ -61,14 +67,15 @@ class ProductSearch extends Product
         // grid filtering conditions
         $query->andFilterWhere([
             'ProductID' => $this->ProductID,
+            'Category' => $this->Category,
             'Price' => $this->Price,
             'StockQuantity' => $this->StockQuantity,
             'CreatedAt' => $this->CreatedAt,
+            'UpdatedAt' => $this->UpdatedAt,
         ]);
 
         $query->andFilterWhere(['like', 'Name', $this->Name])
             ->andFilterWhere(['like', 'Description', $this->Description])
-            ->andFilterWhere(['like', 'Category', $this->Category])
             ->andFilterWhere(['like', 'ImageURL', $this->ImageURL]);
 
         return $dataProvider;
