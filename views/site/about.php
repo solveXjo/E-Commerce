@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!--PreLoader-->
 <div class="loader">
     <div class="loader-inner">
@@ -365,3 +366,23 @@
 <script src="assets/js/sticker.js"></script>
 <!-- main js -->
 <script src="assets/js/main.js"></script>
+=======
+<?php
+
+/** @var yii\web\View $this */
+
+use yii\helpers\Html;
+
+$this->title = 'About';
+$this->params['breadcrumbs'][] = $this->title;
+?>
+<div class="site-about">
+    <h1><?= Html::encode($this->title) ?></h1>
+
+    <p>
+        This is the About page. You may modify the following file to customize its content:
+    </p>
+
+    <code><?= __FILE__ ?></code>
+</div>
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2

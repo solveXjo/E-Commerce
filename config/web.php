@@ -22,7 +22,10 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+<<<<<<< HEAD
             'authTimeout' => 3600,
+=======
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -43,28 +46,53 @@ $config = [
             ],
         ],
         'db' => $db,
+<<<<<<< HEAD
 
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [],
         ],
+=======
+        /*
+        'urlManager' => [
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+            'rules' => [
+            ],
+        ],
+        */
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
     ],
     'params' => $params,
 ];
 
 if (YII_ENV_DEV) {
+<<<<<<< HEAD
 
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
 
+=======
+    // configuration adjustments for 'dev' environment
+    $config['bootstrap'][] = 'debug';
+    $config['modules']['debug'] = [
+        'class' => 'yii\debug\Module',
+        // uncomment the following to add your IP if you are not connecting from localhost.
+        //'allowedIPs' => ['127.0.0.1', '::1'],
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
+<<<<<<< HEAD
 
+=======
+        // uncomment the following to add your IP if you are not connecting from localhost.
+        //'allowedIPs' => ['127.0.0.1', '::1'],
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
     ];
 }
 

@@ -9,6 +9,7 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+<<<<<<< HEAD
 use app\models\Product;
 use app\models\Cart;
 use app\models\CartItem;
@@ -18,6 +19,8 @@ use Error;
 use yii\data\ActiveDataProvider;
 
 
+=======
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
 
 class SiteController extends Controller
 {
@@ -63,6 +66,7 @@ class SiteController extends Controller
         ];
     }
 
+<<<<<<< HEAD
 
 
     public function actionCheckout()
@@ -162,6 +166,8 @@ class SiteController extends Controller
         }
     }
 
+=======
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
     /**
      * Displays homepage.
      *
@@ -233,6 +239,7 @@ class SiteController extends Controller
     {
         return $this->render('about');
     }
+<<<<<<< HEAD
 
     public function actionSignup()
     {
@@ -497,4 +504,6 @@ class SiteController extends Controller
             ->where(['CartID' => $cartId])
             ->sum('Quantity') ?: 0;
     }
+=======
+>>>>>>> afb9eb7f10e78b3a3c8b3f3442ae42b124538ca2
 }
